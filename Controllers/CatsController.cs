@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text;
+using System.ComponentModel;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -18,6 +19,11 @@ public class CatsController : ControllerBase
         _context = context;
         _httpClientFactory = httpClientFactory;
     }
+    private string GetCatsTags(string Id)
+    {
+        var TagIds = _context.CatTags.Where(ct => ct.CatId == Id).Select(ct => ct.TagId).ToList();
+        return String.Join(',', _context.Tags.Where(t => TagIds.Contains(t.Id)).Select(t => t.Name));
+    }
 
     // POST /api/cats/fetch: Fetch 25 cat images and store them in the database
     [HttpPost("fetch")]
@@ -29,7 +35,6 @@ public class CatsController : ControllerBase
             var response = await httpClient.GetStringAsync("https://api.thecatapi.com/v1/images/search?limit=25&has_breeds=1&api_key=live_ULdzjzvb9spXvNGwGA9rElkWDUAcbQOYFkyTzVQBoG5SsQnJatGXEhHA1TnlqFAG");
 
             var cats = JsonConvert.DeserializeObject<List<CatResponse>>(response);
-
             foreach (var cat in cats)
             {
                 if (await _context.Cats.AnyAsync(c => c.CatId == cat.Id)) continue;
@@ -42,30 +47,42 @@ public class CatsController : ControllerBase
                     Image = Encoding.UTF8.GetBytes(cat.Url),
                     Created = DateTime.Now
                 };
-
+                var catValidation = new CatValidator().Validate(catEntity);
+                if (!catValidation.IsValid)
+                    return BadRequest(catValidation.Errors);
                 // Add the cat to the database
                 _context.Cats.Add(catEntity);
+                await _context.SaveChangesAsync();
 
                 // Process and link the tags (temperaments)
                 foreach (var breed in cat.Breeds)
                 {
-                    var tagEntity = await _context.Tags.FirstOrDefaultAsync(t => t.Name == breed.Temperament)
-                                    ?? new TagEntity { Name = breed.Temperament, Created = DateTime.Now };
-
-                    if (tagEntity.Id == 0)  // Tag doesn't exist yet, so add it
-                        _context.Tags.Add(tagEntity);
-
-
-                    // Add the relationship to the join table (CatTag)
-                    _context.CatTags.Add(new CatTag
+                    foreach (var tag in breed.Temperament.Trim().Split(','))
                     {
-                        CatId = catEntity.CatId,
-                        TagId = tagEntity.Id
-                    });
+                        var tagEntity = await _context.Tags.FirstOrDefaultAsync(t => t.Name.Trim() == tag.Trim())
+                                        ?? new TagEntity { Name = tag.Trim(), Created = DateTime.Now };
 
+                        var TagValidation = new TagValidator().Validate(tagEntity);
+                        if(!TagValidation.IsValid)
+                            return BadRequest(TagValidation.Errors);
+                        if (tagEntity.Id == 0)  // Tag doesn't exist yet, so add it
+                            _context.Tags.Add(tagEntity);
+
+                        await _context.SaveChangesAsync();
+
+
+                        // Add the relationship to the join table (CatTag)
+                        _context.CatTags.Add(new CatTag
+                        {
+                            CatId = catEntity.CatId,
+                            TagId = tagEntity.Id
+                        });
+
+                        await _context.SaveChangesAsync();
+                    }
                 }
 
-                await _context.SaveChangesAsync();
+                _context.Database.CloseConnection();
             }
             return Ok("25 cat images fetched and saved!");
 
@@ -86,7 +103,7 @@ public class CatsController : ControllerBase
 
         if (cat == null)
             return NotFound("Cat not found");
-        return Ok(new { cat.CatId, cat.Created, cat.Height, cat.Width, Image = Encoding.UTF8.GetString(cat.Image) });
+        return Ok(new { cat.CatId, cat.Height, cat.Width, Tags = GetCatsTags(cat.CatId), Image = Encoding.UTF8.GetString(cat.Image), cat.Created });
     }
     // GET /api/cats: Retrieve all cats with paging support
     [HttpGet]
@@ -98,7 +115,7 @@ public class CatsController : ControllerBase
             .Take(pageSize)
             .ToListAsync();
 
-        return Ok(cats.Select(cat => new { cat.CatId, cat.Created, cat.Height, cat.Width, Image = Encoding.UTF8.GetString(cat.Image) }).ToList());
+        return Ok(cats.Select(cat => new { cat.CatId, cat.Height, cat.Width, Tags = GetCatsTags(cat.CatId), Image = Encoding.UTF8.GetString(cat.Image), cat.Created }).ToList());
     }
     // GET /api/cats?tag=playful&page=1&pageSize=10: Retrieve cats by tag with paging support
     [HttpGet("byTag")]
@@ -107,7 +124,7 @@ public class CatsController : ControllerBase
         var tags = tag.Split(',');
         var dbTags = await _context.Tags.ToListAsync();
         List<int> tagIds = dbTags
-        .Where(t => tags.Any(x => t.Name.Contains(x, StringComparison.OrdinalIgnoreCase)))
+        .Where(t => tags.Any(x => t.Name.Trim() == x.Trim()))
         .Select(t => t.Id)
         .ToList();
 
@@ -132,8 +149,9 @@ public class CatsController : ControllerBase
             .OrderBy(cat => cat.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(cat => new { cat.CatId, cat.Created, cat.Height, cat.Width, Image = Encoding.UTF8.GetString(cat.Image) }).ToListAsync());
+            .Select(cat => new { cat.CatId, cat.Height, cat.Width, Tags = GetCatsTags(cat.CatId), Image = Encoding.UTF8.GetString(cat.Image), cat.Created }).ToListAsync());
     }
+
 }
 
 // Helper classes for deserialization
