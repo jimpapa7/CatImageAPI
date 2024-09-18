@@ -1,11 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using static System.Net.Mime.MediaTypeNames;
 using System.Text;
-using System.ComponentModel;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -33,7 +29,7 @@ public class CatsController : ControllerBase
         {
             var httpClient = _httpClientFactory.CreateClient();
             var response = await httpClient.GetStringAsync("https://api.thecatapi.com/v1/images/search?limit=25&has_breeds=1&api_key=live_ULdzjzvb9spXvNGwGA9rElkWDUAcbQOYFkyTzVQBoG5SsQnJatGXEhHA1TnlqFAG");
-
+            _context.Database.OpenConnection();
             var cats = JsonConvert.DeserializeObject<List<CatResponse>>(response);
             foreach (var cat in cats)
             {
@@ -63,7 +59,7 @@ public class CatsController : ControllerBase
                                         ?? new TagEntity { Name = tag.Trim(), Created = DateTime.Now };
 
                         var TagValidation = new TagValidator().Validate(tagEntity);
-                        if(!TagValidation.IsValid)
+                        if (!TagValidation.IsValid)
                             return BadRequest(TagValidation.Errors);
                         if (tagEntity.Id == 0)  // Tag doesn't exist yet, so add it
                             _context.Tags.Add(tagEntity);
@@ -116,6 +112,7 @@ public class CatsController : ControllerBase
             .ToListAsync();
 
         return Ok(cats.Select(cat => new { cat.CatId, cat.Height, cat.Width, Tags = GetCatsTags(cat.CatId), Image = Encoding.UTF8.GetString(cat.Image), cat.Created }).ToList());
+        //return Ok();
     }
     // GET /api/cats?tag=playful&page=1&pageSize=10: Retrieve cats by tag with paging support
     [HttpGet("byTag")]
@@ -124,7 +121,7 @@ public class CatsController : ControllerBase
         var tags = tag.Split(',');
         var dbTags = await _context.Tags.ToListAsync();
         List<int> tagIds = dbTags
-        .Where(t => tags.Any(x => t.Name.Trim() == x.Trim()))
+        .Where(t => tags.Any(x => t.Name.Trim().Equals(x.Trim(), StringComparison.OrdinalIgnoreCase)))
         .Select(t => t.Id)
         .ToList();
 
@@ -145,11 +142,14 @@ public class CatsController : ControllerBase
             // No cats found with the specified tag
             return NotFound("No cats found with the specified tag.");
         }
-        return Ok(await _context.Cats.Where(cat => catsWithTag.Contains(cat.CatId))
-            .OrderBy(cat => cat.Id)
+        var catTags = await _context.Cats.Where(cat => catsWithTag.Contains(cat.CatId)).ToListAsync();
+        if (catTags != null)
+            return Ok(catTags.OrderBy(cat => cat.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(cat => new { cat.CatId, cat.Height, cat.Width, Tags = GetCatsTags(cat.CatId), Image = Encoding.UTF8.GetString(cat.Image), cat.Created }).ToListAsync());
+            .Select(cat => new { cat.CatId, cat.Height, cat.Width, Tags = GetCatsTags(cat.CatId), Image = Encoding.UTF8.GetString(cat.Image), cat.Created }).ToList());
+        else
+            return NotFound("No cats found with the specified tag.");
     }
 
 }

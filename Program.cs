@@ -1,45 +1,27 @@
-using FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
+using CatImageAPI;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 
-
-
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container
-builder.Services.AddControllers();
-builder.Services.AddControllers().AddFluentValidation(fv =>
-    fv.RegisterValidatorsFromAssemblyContaining<Program>()
-);
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
-builder.Services.AddHttpClient();  // Add HttpClient service
-builder.Services.AddSwaggerGen();
-var app = builder.Build();
-
-// Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+public class Program
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    public static void Main(string[] args)
+    {
+        var app = CreateHostBuilder(args).Build();
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            var context = services.GetRequiredService<AppDbContext>();
+            context.Database.OpenConnection();
+            context.Database.EnsureCreated(); // This applies any pending migrations and creates the database
+            context.Database.CloseConnection();
+        }
+
+        app.Run();
+    }
+
+    public static IHostBuilder CreateHostBuilder(string[] args) =>
+        Host.CreateDefaultBuilder(args)
+            .ConfigureWebHostDefaults(webBuilder =>
+            {
+                webBuilder.UseStartup<Startup>();
+            });
 }
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<AppDbContext>();
-    context.Database.OpenConnection();
-    context.Database.EnsureCreated(); // This applies any pending migrations and creates the database
-    context.Database.CloseConnection();
-}
-
-
-app.Run();
-
