@@ -26,7 +26,7 @@ public class CatsController : ControllerBase
         try
         {
             var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.GetStringAsync("https://api.thecatapi.com/v1/images/search?limit=25&has_breeds=1&api_key=live_ULdzjzvb9spXvNGwGA9rElkWDUAcbQOYFkyTzVQBoG5SsQnJatGXEhHA1TnlqFAG");
+            var response = await httpClient.GetStringAsync("https://api.thecatapi.com/v1/images/search?limit=25&has_breeds=1&api_key=yourAPIkey");
             _context.Database.OpenConnection();
             var cats = JsonConvert.DeserializeObject<List<CatResponse>>(response);
             foreach (var cat in cats)
