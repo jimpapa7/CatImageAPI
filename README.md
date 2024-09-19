@@ -3,7 +3,8 @@
 Below are the directions in order to use the CatImageAPI App.
 For further directions please contact the owner.
 
-<===================================== Database Section =====================================>
+<=============================== Database Section ===============================>
+
 Run CAtImageAPI
 Create an SQL Database.
 Enable SQL server and Windows Authentication mode.
