@@ -22,6 +22,11 @@ Navigate to your database > Security > Users
 Right click on the user.
 Select properties.
 Navigate to Membership and grand them roles : db_datareader, db_datawriter, db_dll_admin.
+Then open SQL 2022 server 2022 configuration.
+Navigate to SQL Server Network Configuration > Protocols for myServerName.
+Enable TCP/IP.
+Right click on TCP/IP and select properties.
+Navigate to IP Adresses > IPALL and set the TCP PORT (ex. 1433).
 
 <==================================== Visual studio section ====================================>
 Go to appsettings.json file.
