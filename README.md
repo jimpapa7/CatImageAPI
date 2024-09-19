@@ -30,7 +30,9 @@ Right click on TCP/IP and select properties.
 Navigate to IP Adresses > IPALL and set the TCP PORT (ex. 1433).
 
 <=========================== Visual studio section ===========================>
-
+Navigate to the Controllers > CatsController.
+In line 29 var response = await httpClient.GetStringAsync("https://api.thecatapi.com/v1/images/search?limit=25&has_breeds=1&api_key=yourAPIKey"); replace yourAPIKey with your API key given from the cat API.
+If no API key is available, please contact the owner for one otherwise the app may be underperforming.
 Go to appsettings.json file.
 Choose connection string depending if you want to run the project via terminal or docker.
 For docker the your IP is the systems IP.
