@@ -11,7 +11,7 @@ public class Program
             var services = scope.ServiceProvider;
             var context = services.GetRequiredService<AppDbContext>();
             context.Database.OpenConnection();
-            context.Database.EnsureCreated(); // This applies any pending migrations and creates the database
+            context.Database.EnsureCreated(); // Applies any pending migrations and creates the database
             context.Database.CloseConnection();
         }
 

@@ -5,7 +5,7 @@ VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CatImageAPI", "CatImageAPI.csproj", "{AC5A28BF-37C5-4966-9E1C-AD402D6C7839}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CatImageAPI.tests", "..\Users\Δημήτρης\Desktop\CatImageAPI.tests\CatImageAPI.tests.csproj", "{309ACBBE-9673-4679-A74C-61D59821D334}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CatImageAPI.test", "..\CatImageAPI.test\CatImageAPI.test.csproj", "{16AE7F1D-5846-4536-AD4E-0C2AA08E1DEC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{AC5A28BF-37C5-4966-9E1C-AD402D6C7839}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC5A28BF-37C5-4966-9E1C-AD402D6C7839}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC5A28BF-37C5-4966-9E1C-AD402D6C7839}.Release|Any CPU.Build.0 = Release|Any CPU
-		{309ACBBE-9673-4679-A74C-61D59821D334}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{309ACBBE-9673-4679-A74C-61D59821D334}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{309ACBBE-9673-4679-A74C-61D59821D334}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{309ACBBE-9673-4679-A74C-61D59821D334}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16AE7F1D-5846-4536-AD4E-0C2AA08E1DEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16AE7F1D-5846-4536-AD4E-0C2AA08E1DEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16AE7F1D-5846-4536-AD4E-0C2AA08E1DEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16AE7F1D-5846-4536-AD4E-0C2AA08E1DEC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -10,7 +10,7 @@ public class CatsController : ControllerBase
     private readonly AppDbContext _context;
     private readonly IHttpClientFactory _httpClientFactory;
 
-    public CatsController(AppDbContext context, IHttpClientFactory httpClientFactory)
+    public CatsController(AppDbContext context, IHttpClientFactory httpClientFactory = null)
     {
         _context = context;
         _httpClientFactory = httpClientFactory;
@@ -20,8 +20,6 @@ public class CatsController : ControllerBase
         var TagIds = _context.CatTags.Where(ct => ct.CatId == Id).Select(ct => ct.TagId).ToList();
         return String.Join(',', _context.Tags.Where(t => TagIds.Contains(t.Id)).Select(t => t.Name));
     }
-
-    // POST /api/cats/fetch: Fetch 25 cat images and store them in the database
     [HttpPost("fetch")]
     public async Task<IActionResult> FetchCats()
     {
@@ -34,7 +32,7 @@ public class CatsController : ControllerBase
             foreach (var cat in cats)
             {
                 if (await _context.Cats.AnyAsync(c => c.CatId == cat.Id)) continue;
-
+                //Determine if a cat exists
                 var catEntity = new CatEntity
                 {
                     CatId = cat.Id,
@@ -53,6 +51,7 @@ public class CatsController : ControllerBase
                 // Process and link the tags (temperaments)
                 foreach (var breed in cat.Breeds)
                 {
+                    //Determine if a temperament exists
                     foreach (var tag in breed.Temperament.Trim().Split(','))
                     {
                         var tagEntity = await _context.Tags.FirstOrDefaultAsync(t => t.Name.Trim() == tag.Trim())
@@ -87,13 +86,11 @@ public class CatsController : ControllerBase
         catch
         {
             _context.Dispose();
-            return Ok("asdas");
+            return Ok("Failed");
         }
     }
-
-    // GET /api/cats/{id}: Retrieve a cat by its ID
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetCatById(string id)
+    [HttpPost("getcatbyid")]
+    public async Task<IActionResult> GetCatById([FromBody] string id)
     {
         var cat = await _context.Cats.FindAsync(id);
 
@@ -101,7 +98,6 @@ public class CatsController : ControllerBase
             return NotFound("Cat not found");
         return Ok(new { cat.CatId, cat.Height, cat.Width, Tags = GetCatsTags(cat.CatId), Image = Encoding.UTF8.GetString(cat.Image), cat.Created });
     }
-    // GET /api/cats: Retrieve all cats with paging support
     [HttpGet]
     public async Task<IActionResult> GetAllCats([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
@@ -114,7 +110,6 @@ public class CatsController : ControllerBase
         return Ok(cats.Select(cat => new { cat.CatId, cat.Height, cat.Width, Tags = GetCatsTags(cat.CatId), Image = Encoding.UTF8.GetString(cat.Image), cat.Created }).ToList());
         //return Ok();
     }
-    // GET /api/cats?tag=playful&page=1&pageSize=10: Retrieve cats by tag with paging support
     [HttpGet("byTag")]
     public async Task<IActionResult> GetCatsByTag([FromQuery] string tag, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
@@ -153,7 +148,6 @@ public class CatsController : ControllerBase
     }
 
 }
-
 // Helper classes for deserialization
 public class CatResponse
 {
